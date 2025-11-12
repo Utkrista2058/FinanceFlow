@@ -73,18 +73,21 @@ var app = builder.Build();
 
 app.UseCors("AllowVueDevServer");
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
-
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<BudgetDbContext>();
+    dbContext.Database.Migrate();
+}
 
 
 app.Run();

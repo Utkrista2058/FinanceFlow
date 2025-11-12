@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://localhost:7230/api'  
+  // baseURL: 'https://localhost:7230/api'  
+  baseURL: 'https://financeflow-2esa.onrender.com/api'
 });
 
 

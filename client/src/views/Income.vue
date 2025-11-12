@@ -260,30 +260,75 @@ export default {
     addNewIncome() {
       this.showAddModal = true;
     },
+    // async saveNewIncome() {
+    //   try {
+    //     await incomeService.createIncome(this.newIncome);
+    //     this.showAddModal = false;
+    //     this.newIncome = { date: '', amount: '', source: '', notes: '' };
+    //     this.fetchIncomes();
+    //   } catch (err) {
+    //     console.error("Error adding income:", err);
+    //     alert("Failed to add income");
+    //   }
+    // },
     async saveNewIncome() {
-      try {
-        await incomeService.createIncome(this.newIncome);
-        this.showAddModal = false;
-        this.newIncome = { date: '', amount: '', source: '', notes: '' };
-        this.fetchIncomes();
-      } catch (err) {
-        console.error("Error adding income:", err);
-        alert("Failed to add income");
-      }
-    },
+  try {
+    // Convert date to UTC ISO string before sending
+    const payload = {
+      ...this.newIncome,
+      date: this.newIncome.date ? new Date(this.newIncome.date).toISOString() : null
+    };
+
+    await incomeService.createIncome(payload);
+
+    // Reset form and close modal
+    this.showAddModal = false;
+    this.newIncome = { date: '', amount: '', source: '', notes: '' };
+
+    // Refresh the list
+    this.fetchIncomes();
+  } catch (err) {
+    console.error("Error adding income:", err);
+    alert("Failed to add income");
+  }
+},
+
+
+    // editIncome(income) {
+    //   income.isEditing = true;
+    // },
+    // async updateIncome(income) {
+    //   try {
+    //     await incomeService.updateIncome(income.id, income);
+    //     income.isEditing = false;
+    //     this.fetchIncomes();
+    //   } catch (err) {
+    //     console.error("Error updating income:", err);
+    //     alert("Failed to update income");
+    //   }
+    // },
     editIncome(income) {
-      income.isEditing = true;
-    },
-    async updateIncome(income) {
-      try {
-        await incomeService.updateIncome(income.id, income);
-        income.isEditing = false;
-        this.fetchIncomes();
-      } catch (err) {
-        console.error("Error updating income:", err);
-        alert("Failed to update income");
-      }
-    },
+  income.isEditing = true;
+},
+
+async updateIncome(income) {
+  try {
+    // Convert date to UTC ISO string before sending
+    const payload = {
+      ...income,
+      date: income.date ? new Date(income.date).toISOString() : null
+    };
+
+    await incomeService.updateIncome(income.id, payload);
+
+    income.isEditing = false;
+    this.fetchIncomes();
+  } catch (err) {
+    console.error("Error updating income:", err);
+    alert("Failed to update income");
+  }
+},
+
     async deleteIncome(id) {
       if (!confirm("Are you sure you want to delete this income entry?")) return;
       try {

@@ -1,1086 +1,3 @@
-<!-- <template>
-  <div class="expenses-container">
-    
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">
-          <i class="bi bi-receipt-cutoff"></i>
-          Expenses Tracker
-        </h1>
-        <p class="page-subtitle">Track and manage all your expenses in one place</p>
-      </div>
-      <div class="header-actions">
-        <div class="stats-mini">
-          <div class="stat-mini">
-            <span class="stat-mini-label">Total Expenses</span>
-            <span class="stat-mini-value">NPR {{ totalExpenses }}</span>
-          </div>
-          <div class="stat-mini">
-            <span class="stat-mini-label">This Month</span>
-            <span class="stat-mini-value">{{ expenses.length }}</span>
-          </div>
-        </div>
-        <button class="btn-add-expense" @click="showAddForm = !showAddForm">
-          <i :class="showAddForm ? 'bi bi-x-lg' : 'bi bi-plus-lg'"></i>
-          <span>{{ showAddForm ? 'Cancel' : 'Add Expense' }}</span>
-        </button>
-      </div>
-    </div>
-
-    
-    <transition name="slide-fade">
-      <div v-if="showAddForm" class="add-expense-card">
-        <div class="form-header">
-          <div class="form-icon">
-            <i class="bi bi-plus-circle-fill"></i>
-          </div>
-          <div>
-            <h5 class="form-title">Create New Expense</h5>
-            <p class="form-subtitle">Fill in the details to record a new expense</p>
-          </div>
-        </div>
-        
-        <div class="expense-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">
-                <i class="bi bi-calendar-event"></i>
-                Date
-              </label>
-              <input 
-                type="date" 
-                v-model="newExpense.date" 
-                class="form-input"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">
-                <i class="bi bi-cash-stack"></i>
-                Amount
-              </label>
-              <div class="input-with-prefix">
-                <span class="input-prefix">NPR</span>
-                <input 
-                  type="number" 
-                  v-model="newExpense.amount" 
-                  placeholder="0.00" 
-                  class="form-input with-prefix"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">
-                <i class="bi bi-pencil-square"></i>
-                Description
-              </label>
-              <input 
-                type="text" 
-                v-model="newExpense.source" 
-                placeholder="What was this for?" 
-                class="form-input"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">
-                <i class="bi bi-tag"></i>
-                Category
-              </label>
-              <select v-model="newExpense.categoryId" class="form-select">
-                <option disabled value="">Select a category</option>
-                <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                  {{ cat.name }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-group form-actions">
-              <button class="btn-save-expense" @click="addExpense">
-                <i class="bi bi-check-circle-fill"></i>
-                <span>Save Expense</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
-
-    
-    <div class="expenses-list-card">
-      <div class="list-header">
-        <h5 class="list-title">
-          <i class="bi bi-list-check"></i>
-          All Expenses
-        </h5>
-        <div class="list-controls">
-          <div class="filter-dropdown">
-            <i class="bi bi-funnel"></i>
-            <select class="filter-select">
-              <option>All Categories</option>
-              <option v-for="cat in categories" :key="cat.id">{{ cat.name }}</option>
-            </select>
-          </div>
-          <div class="search-box">
-            <i class="bi bi-search"></i>
-            <input type="text" placeholder="Search expenses..." />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="expenses.length > 0" class="expenses-table-wrapper">
-        <table class="expenses-table">
-          <thead>
-            <tr>
-              <th class="col-number">#</th>
-              <th class="col-date">Date</th>
-              <th class="col-amount">Amount</th>
-              <th class="col-description">Description</th>
-              <th class="col-category">Category</th>
-              <th class="col-actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr 
-              v-for="(expense, index) in expenses" 
-              :key="expense.id"
-              class="expense-row"
-              :class="{ 'editing-row': expense.isEditing }"
-            >
-              <td class="col-number">
-                <span class="row-number">{{ index + 1 }}</span>
-              </td>
-              
-              <td class="col-date">
-                <div v-if="!expense.isEditing" class="date-display">
-                  <i class="bi bi-calendar3"></i>
-                  {{ formatDate(expense.date) }}
-                </div>
-                <input 
-                  v-else
-                  type="date" 
-                  v-model="expense.date" 
-                  class="form-input-inline"
-                />
-              </td>
-
-              <td class="col-amount">
-                <div v-if="!expense.isEditing" class="amount-display">
-                  <span class="currency">NPR</span>
-                  <span class="amount">{{ formatAmount(expense.amount) }}</span>
-                </div>
-                <input 
-                  v-else
-                  type="number" 
-                  v-model="expense.amount" 
-                  class="form-input-inline"
-                />
-              </td>
-
-              <td class="col-description">
-                <div v-if="!expense.isEditing" class="description-display">
-                  <i :class="getExpenseIcon(expense.source)"></i>
-                  <span>{{ expense.source || 'No description' }}</span>
-                </div>
-                <input 
-                  v-else
-                  v-model="expense.source" 
-                  class="form-input-inline"
-                  placeholder="Description"
-                />
-              </td>
-
-              <td class="col-category">
-                <span v-if="!expense.isEditing" class="category-tag">
-                  {{ getCategoryName(expense.categoryId) }}
-                </span>
-                <select 
-                  v-else
-                  v-model="expense.categoryId" 
-                  class="form-select-inline"
-                >
-                  <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                    {{ cat.name }}
-                  </option>
-                </select>
-              </td>
-
-              <td class="col-actions">
-                <div class="action-buttons">
-                  <template v-if="!expense.isEditing">
-                    <button 
-                      class="btn-action btn-action-edit" 
-                      @click="editExpense(expense)"
-                      title="Edit expense"
-                    >
-                      <i class="bi bi-pencil-fill"></i>
-                    </button>
-                    <button 
-                      class="btn-action btn-action-delete" 
-                      @click="deleteExpense(expense.id)"
-                      title="Delete expense"
-                    >
-                      <i class="bi bi-trash-fill"></i>
-                    </button>
-                  </template>
-                  <template v-else>
-                    <button 
-                      class="btn-action btn-action-save" 
-                      @click="updateExpense(expense)"
-                      title="Save changes"
-                    >
-                      <i class="bi bi-check-lg"></i>
-                    </button>
-                    <button 
-                      class="btn-action btn-action-cancel" 
-                      @click="cancelEdit(expense)"
-                      title="Cancel"
-                    >
-                      <i class="bi bi-x-lg"></i>
-                    </button>
-                  </template>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div v-else class="empty-state">
-        <div class="empty-icon">
-          <i class="bi bi-receipt"></i>
-        </div>
-        <h3 class="empty-title">No Expenses Yet</h3>
-        <p class="empty-text">Start tracking your expenses by adding your first expense above</p>
-        <button class="btn-create-first" @click="showAddForm = true">
-          <i class="bi bi-plus-circle"></i>
-          Add Your First Expense
-        </button>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script>
-import expenseService from '../services/expenseService';
-import categoryService from '../services/categoryService';
-
-export default {
-  name: 'Expense',
-  data() {
-    return {
-      expenses: [],
-      categories: [],
-      showAddForm: false,
-      newExpense: { date: '', amount: '', source: '', categoryId: '' },
-    };
-  },
-  computed: {
-    totalExpenses() {
-      const total = this.expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
-      return this.formatAmount(total);
-    }
-  },
-  mounted() {
-    this.fetchExpenses();
-    this.fetchCategories();
-  },
-  methods: {
-    async fetchExpenses() {
-      try {
-        const res = await expenseService.getExpenses();
-        this.expenses = res.data.map(e => ({
-          ...e,
-          date: e.date ? e.date.split('T')[0] : '',
-          isEditing: false,
-          source: e.description
-        }));
-      } catch (err) {
-        console.error(err);
-        this.showNotification('Failed to fetch expenses', 'error');
-      }
-    },
-    async fetchCategories() {
-      try {
-        const res = await categoryService.getCategories();
-        this.categories = res.data;
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    editExpense(expense) {
-      this.expenses.forEach(e => e.isEditing = false);
-      expense.isEditing = true;
-    },
-    cancelEdit(expense) {
-      expense.isEditing = false;
-      this.fetchExpenses();
-    },
-    async updateExpense(expense) {
-      if (!expense.date || !expense.amount || !expense.categoryId) {
-        this.showNotification('Please fill all required fields', 'warning');
-        return;
-      }
-
-      try {
-        const updated = {
-          Id: expense.id,
-          Date: new Date(expense.date).toISOString().split('T')[0],
-          Amount: parseFloat(expense.amount),
-          Description: expense.source,
-          CategoryId: parseInt(expense.categoryId)
-        };
-
-        await expenseService.updateExpense(expense.id, updated);
-        expense.isEditing = false;
-        this.fetchExpenses();
-        this.showNotification('Expense updated successfully', 'success');
-      } catch (err) {
-        console.error(err);
-        this.showNotification('Failed to update expense', 'error');
-      }
-    },
-    async deleteExpense(id) {
-      if (!confirm('Are you sure you want to delete this expense?')) return;
-      try {
-        await expenseService.deleteExpense(id);
-        this.fetchExpenses();
-        this.showNotification('Expense deleted successfully', 'success');
-      } catch (err) {
-        console.error(err);
-        this.showNotification('Failed to delete expense', 'error');
-      }
-    },
-    async addExpense() {
-      if (!this.newExpense.date || !this.newExpense.amount || !this.newExpense.categoryId) {
-        this.showNotification('Please fill all required fields', 'warning');
-        return;
-      }
-
-      const expenseObject = {
-        Date: new Date(this.newExpense.date).toISOString().split('T')[0],
-        Amount: parseFloat(this.newExpense.amount),
-        Description: this.newExpense.source,
-        CategoryId: parseInt(this.newExpense.categoryId)
-      };
-
-      try {
-        await expenseService.createExpense(expenseObject);
-        this.newExpense = { date: '', amount: '', source: '', categoryId: '' };
-        this.showAddForm = false;
-        this.fetchExpenses();
-        this.showNotification('Expense added successfully', 'success');
-      } catch (error) {
-        console.error("Error adding expense:", error);
-        this.showNotification('Failed to add expense', 'error');
-      }
-    },
-    formatAmount(amount) {
-      return parseFloat(amount || 0).toLocaleString('en-IN', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      });
-    },
-    formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      const options = { month: 'short', day: 'numeric', year: 'numeric' };
-      return date.toLocaleDateString('en-US', options);
-    },
-    getCategoryName(categoryId) {
-      const cat = this.categories.find(c => c.id === categoryId);
-      return cat ? cat.name : 'Unknown';
-    },
-    getExpenseIcon(description) {
-      if (!description) return 'bi bi-receipt';
-      const lower = description.toLowerCase();
-      if (lower.includes('food') || lower.includes('restaurant')) return 'bi bi-cup-hot';
-      if (lower.includes('transport') || lower.includes('taxi')) return 'bi bi-car-front';
-      if (lower.includes('shopping') || lower.includes('store')) return 'bi bi-bag';
-      if (lower.includes('entertainment') || lower.includes('movie')) return 'bi bi-film';
-      if (lower.includes('bill') || lower.includes('utility')) return 'bi bi-receipt';
-      return 'bi bi-receipt';
-    },
-    showNotification(message, type) {
-      alert(message);
-    }
-  }
-};
-</script>
-
-<style scoped>
-@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css');
-
-.expenses-container {
-  padding: 2rem;
-  background: linear-gradient(135deg, #f5f7fa 0%, #f0f3f7 100%);
-  min-height: 100vh;
-}
-
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.page-subtitle {
-  color: #6b7280;
-  margin: 0.25rem 0 0 0;
-  font-size: 0.95rem;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.stats-mini {
-  display: flex;
-  gap: 1rem;
-}
-
-.stat-mini {
-  background: white;
-  padding: 0.75rem 1.25rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.stat-mini-label {
-  display: block;
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.stat-mini-value {
-  display: block;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.btn-add-expense {
-  padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.btn-add-expense:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-/* Add Expense Form */
-.slide-fade-enter-active {
-  transition: all 0.3s ease;
-}
-
-.slide-fade-leave-active {
-  transition: all 0.2s ease;
-}
-
-.slide-fade-enter-from {
-  transform: translateY(-20px);
-  opacity: 0;
-}
-
-.slide-fade-leave-to {
-  transform: translateY(-10px);
-  opacity: 0;
-}
-
-.add-expense-card {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 2px solid #667eea;
-}
-
-.form-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.form-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  color: white;
-}
-
-.form-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-
-.form-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0.25rem 0 0 0;
-}
-
-.expense-form {
-  background: #f9fafb;
-  padding: 1.5rem;
-  border-radius: 12px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #4b5563;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.form-input,
-.form-select {
-  padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 0.9375rem;
-  transition: all 0.3s ease;
-  background: white;
-}
-
-.form-input:focus,
-.form-select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-}
-
-.input-with-prefix {
-  position: relative;
-}
-
-.input-prefix {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-weight: 600;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.form-input.with-prefix {
-  padding-left: 3rem;
-}
-
-.form-actions {
-  display: flex;
-  align-items: flex-end;
-}
-
-.btn-save-expense {
-  width: 100%;
-  padding: 0.875rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.btn-save-expense:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-}
-
-
-.expenses-list-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-}
-
-.list-header {
-  padding: 1.5rem 2rem;
-  border-bottom: 2px solid #f3f4f6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.list-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.list-controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.filter-dropdown {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.filter-dropdown i {
-  position: absolute;
-  left: 0.875rem;
-  color: #9ca3af;
-  pointer-events: none;
-}
-
-.filter-select {
-  padding: 0.5rem 1rem 0.5rem 2.5rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: white;
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
-.search-box {
-  position: relative;
-}
-
-.search-box i {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-}
-
-.search-box input {
-  padding: 0.5rem 1rem 0.5rem 2.5rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  width: 250px;
-  transition: all 0.3s ease;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: #667eea;
-  width: 300px;
-}
-
-
-.expenses-table-wrapper {
-  overflow-x: auto;
-}
-
-.expenses-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.expenses-table thead th {
-  padding: 1rem 1.5rem;
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 2px solid #f3f4f6;
-  background: #f9fafb;
-}
-
-.expenses-table tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: all 0.2s ease;
-}
-
-.expenses-table tbody tr:hover {
-  background: #f9fafb;
-}
-
-.expenses-table tbody tr.editing-row {
-  background: #fef3c7;
-}
-
-.expenses-table tbody td {
-  padding: 1rem 1.5rem;
-}
-
-.row-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: #f3f4f6;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.date-display {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #4b5563;
-  font-size: 0.9375rem;
-}
-
-.date-display i {
-  color: #9ca3af;
-}
-
-.amount-display {
-  display: flex;
-  align-items: baseline;
-  gap: 0.375rem;
-}
-
-.currency {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.amount {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #ef4444;
-}
-
-.description-display {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: #1f2937;
-}
-
-.description-display i {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 0.875rem;
-}
-
-.category-tag {
-  padding: 0.375rem 0.875rem;
-  background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
-  color: #5b21b6;
-  border-radius: 20px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  display: inline-block;
-}
-
-.form-input-inline,
-.form-select-inline {
-  padding: 0.5rem 0.75rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  width: 100%;
-  transition: all 0.3s ease;
-}
-
-.form-input-inline:focus,
-.form-select-inline:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
-
-.btn-action {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.875rem;
-}
-
-.btn-action-edit {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.btn-action-edit:hover {
-  background: #bfdbfe;
-  transform: scale(1.1);
-}
-
-.btn-action-delete {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.btn-action-delete:hover {
-  background: #fecaca;
-  transform: scale(1.1);
-}
-
-.btn-action-save {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.btn-action-save:hover {
-  background: #a7f3d0;
-  transform: scale(1.1);
-}
-
-.btn-action-cancel {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.btn-action-cancel:hover {
-  background: #e5e7eb;
-  transform: scale(1.1);
-}
-
-
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.empty-icon {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 1.5rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  color: #9ca3af;
-}
-
-.empty-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
-}
-
-.empty-text {
-  color: #6b7280;
-  margin: 0 0 2rem 0;
-}
-
-.btn-create-first {
-  padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.btn-create-first:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-
-@media (max-width: 1024px) {
-  .form-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .form-actions {
-    grid-column: span 2;
-  }
-}
-
-@media (max-width: 768px) {
-  .expenses-container {
-    padding: 1rem;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .header-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .stats-mini {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .btn-add-expense {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .list-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .list-controls {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .filter-select,
-  .search-box input {
-    width: 100%;
-  }
-
-  .search-box input:focus {
-    width: 100%;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    grid-column: span 1;
-  }
-
-  .expenses-table {
-    font-size: 0.875rem;
-  }
-
-  .expenses-table thead th,
-  .expenses-table tbody td {
-    padding: 0.75rem 0.5rem;
-  }
-
-  .col-number {
-    display: none;
-  }
-
-  .description-display i {
-    width: 32px;
-    height: 32px;
-    font-size: 0.75rem;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-title {
-    font-size: 1.5rem;
-  }
-
-  .stat-mini {
-    padding: 0.5rem 1rem;
-  }
-
-  .stat-mini-value {
-    font-size: 1rem;
-  }
-}
-</style> -->
-
-
-
-
-
-
 <template>
   <div class="container mt-5">
     
@@ -1308,7 +225,7 @@ export default {
   </div>
 </template>
 
-<script>
+<!-- <script>
 import expenseService from '../services/expenseService';
 import categoryService from '../services/categoryService';
 
@@ -1373,7 +290,8 @@ export default {
       }
 
       const expenseObject = {
-        Date: new Date(this.newExpense.date).toISOString().split('T')[0],
+        // Date: new Date(this.newExpense.date).toISOString().split('T')[0],
+        Date: new Date(expense.date).toISOString().split('T')[0],
         Amount: parseFloat(this.newExpense.amount),
         Description: this.newExpense.source,
         CategoryId: parseInt(this.newExpense.categoryId)
@@ -1421,6 +339,126 @@ export default {
       try {
         await expenseService.deleteExpense(id);
         this.fetchExpenses();
+      } catch (err) {
+        console.error("Error deleting expense:", err);
+        alert("Failed to delete expense");
+      }
+    }
+  }
+};
+</script> -->
+<script>
+import expenseService from '../services/expenseService';
+import categoryService from '../services/categoryService';
+
+export default {
+  name: 'Expense',
+  data() {
+    return {
+      expenses: [],
+      categories: [],
+      showAddModal: false,
+      newExpense: { date: '', amount: '', source: '', categoryId: '' },
+    };
+  },
+  computed: {
+    totalExpenses() {
+      const total = this.expenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+      return total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    monthlyExpenseCount() {
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      return this.expenses.filter(expense => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+      }).length;
+    }
+  },
+  mounted() {
+    this.fetchExpenses();
+    this.fetchCategories();
+  },
+  methods: {
+    async fetchExpenses() {
+      try {
+        const res = await expenseService.getExpenses();
+        this.expenses = res.data.map(e => ({
+          ...e,
+          date: e.date ? e.date.split('T')[0] : '',
+          isEditing: false,
+          source: e.description
+        }));
+      } catch (err) {
+        console.error("Error fetching expenses:", err);
+        alert("Failed to fetch expenses");
+      }
+    },
+    async fetchCategories() {
+      try {
+        const res = await categoryService.getCategories();
+        this.categories = res.data;
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    },
+    addNewExpense() {
+      this.showAddModal = true;
+    },
+    async saveNewExpense() {
+      if (!this.newExpense.date || !this.newExpense.amount || !this.newExpense.categoryId) {
+        alert('Please fill all required fields');
+        return;
+      }
+
+      const payload = {
+        date: new Date(this.newExpense.date).toISOString(), // send full UTC ISO string
+        amount: parseFloat(this.newExpense.amount),
+        description: this.newExpense.source,
+        categoryId: parseInt(this.newExpense.categoryId)
+      };
+
+      try {
+        await expenseService.createExpense(payload);
+        this.showAddModal = false;
+        this.newExpense = { date: '', amount: '', source: '', categoryId: '' };
+        await this.fetchExpenses();
+      } catch (error) {
+        console.error("Error adding expense:", error);
+        alert("Failed to add expense");
+      }
+    },
+    editExpense(expense) {
+      this.expenses.forEach(e => e.isEditing = false);
+      expense.isEditing = true;
+    },
+    async updateExpense(expense) {
+      if (!expense.date || !expense.amount || !expense.categoryId) {
+        alert('Please fill all required fields');
+        return;
+      }
+
+      const payload = {
+        date: new Date(expense.date).toISOString(), // send full UTC ISO string
+        amount: parseFloat(expense.amount),
+        description: expense.source,
+        categoryId: parseInt(expense.categoryId)
+      };
+
+      try {
+        await expenseService.updateExpense(expense.id, payload);
+        expense.isEditing = false;
+        await this.fetchExpenses();
+      } catch (err) {
+        console.error("Error updating expense:", err);
+        alert("Failed to update expense");
+      }
+    },
+    async deleteExpense(id) {
+      if (!confirm('Are you sure you want to delete this expense?')) return;
+      try {
+        await expenseService.deleteExpense(id);
+        await this.fetchExpenses();
       } catch (err) {
         console.error("Error deleting expense:", err);
         alert("Failed to delete expense");

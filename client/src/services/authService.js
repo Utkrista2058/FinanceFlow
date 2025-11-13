@@ -32,6 +32,17 @@ class AuthService {
     
     return response.data;
   }
+  async loginWithGoogle(idToken) {
+    const response = await api.post(`${API_URL}/google-login`, {
+      idToken
+    });
+    
+    if (response.data.token) {
+      localStorage.setItem('user', JSON.stringify(response.data));
+    }
+    
+    return response.data;
+  }
 
   logout() {
     localStorage.removeItem('user');

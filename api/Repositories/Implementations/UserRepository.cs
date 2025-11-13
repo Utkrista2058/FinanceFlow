@@ -18,6 +18,12 @@ namespace SmartBudgetTracker.Repositories.Implementations
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
         }
+        // Repositories/UserRepository.cs
+        public async Task UpdateAsync(User user)
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
 
         public async Task<User> GetByEmailAsync(string email)
         {

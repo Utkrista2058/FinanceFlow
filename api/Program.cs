@@ -125,15 +125,20 @@
 //app.Run();
 
 
+using FirebaseAdmin;
+using Google;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 using SmartBudgetTracker.Data;
+using SmartBudgetTracker.Repositories;
 using SmartBudgetTracker.Repositories.Implementations;
 using SmartBudgetTracker.Repositories.Interfaces;
+using SmartBudgetTracker.Services;
 using System.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -159,6 +164,32 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
         };
     });
+try
+{
+    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FIREBASE_CONFIG")))
+    {
+        // Production - read from environment variable
+        var firebaseConfig = Environment.GetEnvironmentVariable("FIREBASE_CONFIG");
+        FirebaseApp.Create(new AppOptions()
+        {
+            Credential = GoogleCredential.FromJson(firebaseConfig)
+        });
+    }
+    else if (File.Exists("firebase-adminsdk.json"))
+    {
+        // Development - read from file if it exists
+        FirebaseApp.Create(new AppOptions()
+        {
+            Credential = GoogleCredential.FromFile("firebase-adminsdk.json")
+        });
+    }
+    // If neither exists, skip Firebase initialization (for migrations)
+}
+catch (Exception ex)
+{
+    // Log but don't crash during startup/migrations
+    Console.WriteLine($"Firebase initialization skipped: {ex.Message}");
+}
 
 builder.Services.AddControllers()
     .AddJsonOptions(x =>
@@ -166,6 +197,7 @@ builder.Services.AddControllers()
         x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         x.JsonSerializerOptions.WriteIndented = true;
     });
+
 
 builder.Services.AddDbContext<BudgetDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -205,15 +237,33 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-
+//FirebaseApp.Create(new AppOptions()
+//{
+//    Credential = GoogleCredential.FromFile("path/to/firebase-adminsdk.json")
+//});
+// Firebase initialization - optional for migrations
+try
+{
+    if (File.Exists("firebase-adminsdk.json"))
+    {
+        FirebaseApp.Create(new AppOptions()
+        {
+            Credential = GoogleCredential.FromFile("firebase-adminsdk.json")
+        });
+    }
+}
+catch
+{
+    // Skip Firebase during migrations
+}
 // CORS - Allow same origin since we're serving frontend from same domain
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueClient", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:5173",                        // for local Vue dev
-            "https://financeflow-2esa.onrender.com"        // Same domain - no need for separate frontend URL
+            "http://localhost:5173",                        
+            "https://financeflow-2esa.onrender.com"        
         )
         .AllowAnyHeader()
         .AllowAnyMethod();
@@ -221,8 +271,26 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<BudgetDbContext>();
+    db.Database.Migrate(); 
+}
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<BudgetDbContext>();
+        context.Database.Migrate(); // Applies pending migrations automatically
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating the database.");
+    }
+}
 
-// ============ MIDDLEWARE ORDER (IMPORTANT!) ============
 app.UseCors("AllowVueClient");
 
 // Serve static files from wwwroot (your Vue build)

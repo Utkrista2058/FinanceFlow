@@ -5,6 +5,9 @@ obj/
 *.suo
 .vs/
 *.cache
+financeflow-69a60-firebase-adminsdk-fbsvc-9931b28465
+
+*firebase-adminsdk*.json
 
 # Vue/Node
 node_modules/

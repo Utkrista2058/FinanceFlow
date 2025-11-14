@@ -13,5 +13,6 @@ namespace SmartBudgetTracker.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<BudgetGoal> BudgetGoals { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
     }
 }

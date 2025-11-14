@@ -1,12 +1,25 @@
 <template>
   <div class="dashboard-container">
-    
     <div class="dashboard-header">
       <div>
         <h1 class="dashboard-title">Financial Dashboard</h1>
         <p class="dashboard-subtitle">Track your income and expenses at a glance</p>
       </div>
+      <!-- <div class="header-actions">
+        <button @click="downloadExcelReport" class="download-btn" :disabled="isDownloading">
+          <i class="bi bi-download"></i>
+          <span v-if="!isDownloading">Download Yearly Report</span>
+          <span v-else>Downloading...</span>
+        </button>
+        <span class="date-badge">
+          <i class="bi bi-calendar3"></i>
+          {{ currentDate }}
+        </span>
+      </div> -->
       <div class="header-actions">
+        <!-- ✅ ADD THIS LINE -->
+        <NotificationBell />
+
         <button @click="downloadExcelReport" class="download-btn" :disabled="isDownloading">
           <i class="bi bi-download"></i>
           <span v-if="!isDownloading">Download Yearly Report</span>
@@ -19,73 +32,80 @@
       </div>
     </div>
 
-    
     <!-- 🌟 SMART INSIGHTS BANNER -->
-<div class="insights-banner" v-if="insights && insights.savingPercent !== undefined && !insightsLoading">
-  <div class="insights-content">
-    <div class="insight-icon-wrapper">
-      <div class="insight-icon-pulse"></div>
-      <div class="insight-icon">
-        <i class="bi bi-lightbulb-fill"></i>
-      </div>
-    </div>
-    
-    <div class="insight-main">
-      <div class="insight-header">
-        <h3>💡 Smart Insights</h3>
-        <span class="insight-badge">This Month</span>
-      </div>
-      <p class="insight-message">{{ insights.summary }}</p>
-      <p class="insight-comparison" v-if="insights.comparison">
-        <i class="bi bi-graph-up-arrow"></i>
-        {{ insights.comparison }}
-      </p>
-    </div>
-
-    <div class="insight-stats-wrapper">
-      <div class="savings-circle" :class="savingsClass">
-        <svg viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" class="circle-bg"/>
-          <circle 
-            cx="50" 
-            cy="50" 
-            r="40" 
-            class="circle-progress"
-            :style="{ strokeDasharray: `${Math.min(insights.savingPercent * 2.51, 251.2)} 251.2` }"
-          />
-        </svg>
-        <div class="circle-content">
-          <span class="percentage">{{ insights.savingPercent.toFixed(1) }}%</span>
-          <span class="label">Saved</span>
-        </div>
-      </div>
-
-      <div class="mini-stats">
-        <div class="mini-stat">
-          <i class="bi bi-arrow-down-circle income-icon-mini"></i>
-          <div>
-            <span class="mini-label">Income</span>
-            <span class="mini-value income">NPR {{ formatNumber(insights.thisMonthIncome) }}</span>
+    <div
+      class="insights-banner"
+      v-if="insights && insights.savingPercent !== undefined && !insightsLoading"
+    >
+      <div class="insights-content">
+        <div class="insight-icon-wrapper">
+          <div class="insight-icon-pulse"></div>
+          <div class="insight-icon">
+            <i class="bi bi-lightbulb-fill"></i>
           </div>
         </div>
-        <div class="mini-stat">
-          <i class="bi bi-arrow-up-circle expense-icon-mini"></i>
-          <div>
-            <span class="mini-label">Expenses</span>
-            <span class="mini-value expense">NPR {{ formatNumber(insights.thisMonthExpense) }}</span>
+
+        <div class="insight-main">
+          <div class="insight-header">
+            <h3>💡 Smart Insights</h3>
+            <span class="insight-badge">This Month</span>
+          </div>
+          <p class="insight-message">{{ insights.summary }}</p>
+          <p class="insight-comparison" v-if="insights.comparison">
+            <i class="bi bi-graph-up-arrow"></i>
+            {{ insights.comparison }}
+          </p>
+        </div>
+
+        <div class="insight-stats-wrapper">
+          <div class="savings-circle" :class="savingsClass">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" class="circle-bg" />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                class="circle-progress"
+                :style="{
+                  strokeDasharray: `${Math.min(insights.savingPercent * 2.51, 251.2)} 251.2`,
+                }"
+              />
+            </svg>
+            <div class="circle-content">
+              <span class="percentage">{{ insights.savingPercent.toFixed(1) }}%</span>
+              <span class="label">Saved</span>
+            </div>
+          </div>
+
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <i class="bi bi-arrow-down-circle income-icon-mini"></i>
+              <div>
+                <span class="mini-label">Income</span>
+                <span class="mini-value income"
+                  >NPR {{ formatNumber(insights.thisMonthIncome) }}</span
+                >
+              </div>
+            </div>
+            <div class="mini-stat">
+              <i class="bi bi-arrow-up-circle expense-icon-mini"></i>
+              <div>
+                <span class="mini-label">Expenses</span>
+                <span class="mini-value expense"
+                  >NPR {{ formatNumber(insights.thisMonthExpense) }}</span
+                >
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
+    <div class="insights-banner insights-loading" v-else-if="insightsLoading">
+      <div class="loading-spinner"></div>
+      <span>Loading insights...</span>
+    </div>
 
-<div class="insights-banner insights-loading" v-else-if="insightsLoading">
-  <div class="loading-spinner"></div>
-  <span>Loading insights...</span>
-</div>
-   
     <div class="row g-4 mb-4">
       <div class="col-lg-4 col-md-6" v-for="(card, idx) in summaryCards" :key="card.title">
         <div class="stat-card" :class="`stat-card-${idx + 1}`">
@@ -132,22 +152,15 @@
               Top Expense Categories
             </h5>
           </div>
-          
+
           <div class="pie-wrapper">
             <canvas id="categoryPie"></canvas>
           </div>
 
           <div class="category-list">
-            <div
-              class="category-item"
-              v-for="cat in topCategories"
-              :key="cat.name"
-            >
+            <div class="category-item" v-for="cat in topCategories" :key="cat.name">
               <div class="category-info">
-                <span
-                  class="category-dot"
-                  :style="{ backgroundColor: cat.color }"
-                ></span>
+                <span class="category-dot" :style="{ backgroundColor: cat.color }"></span>
                 <span class="category-name">{{ cat.name }}</span>
               </div>
               <div class="category-amount">
@@ -186,7 +199,10 @@
               </td>
               <td>
                 <div class="description-cell">
-                  <div class="description-icon" :class="transaction.type === 'income' ? 'income-icon' : 'expense-icon'">
+                  <div
+                    class="description-icon"
+                    :class="transaction.type === 'income' ? 'income-icon' : 'expense-icon'"
+                  >
                     <i :class="getTransactionIcon(transaction)"></i>
                   </div>
                   <span>{{ transaction.description }}</span>
@@ -196,12 +212,19 @@
                 <span class="category-badge">{{ transaction.category }}</span>
               </td>
               <td>
-                <span class="amount-cell" :class="transaction.type === 'income' ? 'positive' : 'negative'">
-                  {{ transaction.type === 'income' ? '+' : '-' }}NPR {{ formatNumber(transaction.amount) }}
+                <span
+                  class="amount-cell"
+                  :class="transaction.type === 'income' ? 'positive' : 'negative'"
+                >
+                  {{ transaction.type === 'income' ? '+' : '-' }}NPR
+                  {{ formatNumber(transaction.amount) }}
                 </span>
               </td>
               <td>
-                <span class="status-badge" :class="transaction.type === 'income' ? 'income-badge' : 'expense-badge'">
+                <span
+                  class="status-badge"
+                  :class="transaction.type === 'income' ? 'income-badge' : 'expense-badge'"
+                >
                   {{ transaction.type === 'income' ? 'Income' : 'Expense' }}
                 </span>
               </td>
@@ -214,285 +237,314 @@
 </template>
 
 <script>
-import { onMounted, ref, computed,watch } from "vue";
-import reportService from "../services/reportService";
-import expenseService from "../services/expenseService";
-import incomeService from "../services/incomeService";
-import insightsService from "../services/insightsService"; // 🌟 NEW IMPORT
-import Chart from "chart.js/auto";
+import { onMounted, ref, computed, watch } from 'vue'
+import reportService from '../services/reportService'
+import expenseService from '../services/expenseService'
+import incomeService from '../services/incomeService'
+import insightsService from '../services/insightsService' // 🌟 NEW IMPORT
+import Chart from 'chart.js/auto'
+import NotificationBell from '../components/NotificationBell.vue'
 
 export default {
-  name: "Dashboard",
+  name: 'Dashboard',
+  components: {
+    NotificationBell,
+  },
+
   setup() {
     const summaryCards = ref([
-      { 
-        title: "Total Income", 
-        value: 0, 
-        icon: "bi bi-wallet2",
-        change: 12.5
+      {
+        title: 'Total Income',
+        value: 0,
+        icon: 'bi bi-wallet2',
+        change: 12.5,
       },
-      { 
-        title: "Total Expenses", 
-        value: 0, 
-        icon: "bi bi-credit-card",
-        change: -8.2
+      {
+        title: 'Total Expenses',
+        value: 0,
+        icon: 'bi bi-credit-card',
+        change: -8.2,
       },
-      { 
-        title: "Balance", 
-        value: 0, 
-        icon: "bi bi-bank",
-        change: 15.3
+      {
+        title: 'Balance',
+        value: 0,
+        icon: 'bi bi-bank',
+        change: 15.3,
       },
-    ]);
+    ])
 
-    const recentExpenses = ref([]);
-    const recentIncomes = ref([]);
-    const recentTransactions = ref([]);
-    const topCategories = ref([]);
-    const isDownloading = ref(false);
-    
+    const recentExpenses = ref([])
+    const recentIncomes = ref([])
+    const recentTransactions = ref([])
+    const topCategories = ref([])
+    const isDownloading = ref(false)
+
     // 🌟 NEW: Insights state
-    const insights = ref(null);
-    const insightsLoading = ref(true);
+    const insights = ref(null)
+    const insightsLoading = ref(true)
 
-      watch(insights, (newVal) => {
-      console.log('📊 Insights data changed:', newVal);
-      console.log('📊 SavingPercent:', newVal?.SavingPercent);
-      console.log('📊 Condition check:', newVal && newVal.SavingPercent !== undefined);
-    }, { immediate: true, deep: true });
-     watch(insightsLoading, (newVal) => {
-      console.log('⏳ Insights loading:', newVal);
-    }, { immediate: true });
+    watch(
+      insights,
+      (newVal) => {
+        console.log('📊 Insights data changed:', newVal)
+        console.log('📊 SavingPercent:', newVal?.SavingPercent)
+        console.log('📊 Condition check:', newVal && newVal.SavingPercent !== undefined)
+      },
+      { immediate: true, deep: true },
+    )
+    watch(
+      insightsLoading,
+      (newVal) => {
+        console.log('⏳ Insights loading:', newVal)
+      },
+      { immediate: true },
+    )
 
     const currentDate = computed(() => {
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date().toLocaleDateString('en-US', options);
-    });
+      const options = { year: 'numeric', month: 'long', day: 'numeric' }
+      return new Date().toLocaleDateString('en-US', options)
+    })
 
     // 🌟 NEW: Computed property for savings class
     const savingsClass = computed(() => {
-      if (!insights.value) return '';
-      if (insights.value.SavingPercent > 20) return 'excellent';
-      if (insights.value.SavingPercent > 0) return 'good';
-      return 'warning';
-    });
+      if (!insights.value) return ''
+      if (insights.value.SavingPercent > 20) return 'excellent'
+      if (insights.value.SavingPercent > 0) return 'good'
+      return 'warning'
+    })
 
     const formatNumber = (num) => {
-      return parseFloat(num || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
+      return parseFloat(num || 0).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    }
 
     const formatDate = (dateString) => {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      const options = { month: 'short', day: 'numeric' };
-      return date.toLocaleDateString('en-US', options);
-    };
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      const options = { month: 'short', day: 'numeric' }
+      return date.toLocaleDateString('en-US', options)
+    }
 
     const getTransactionIcon = (transaction) => {
       if (transaction.type === 'income') {
-        return 'bi bi-arrow-down-circle';
+        return 'bi bi-arrow-down-circle'
       }
-      
+
       const icons = {
-        'Food': 'bi bi-cup-hot',
-        'Transport': 'bi bi-car-front',
-        'Shopping': 'bi bi-bag',
-        'Entertainment': 'bi bi-film',
-        'Bills': 'bi bi-receipt',
-        'Health': 'bi bi-heart-pulse',
-        'Education': 'bi bi-book',
-      };
-      return icons[transaction.category] || 'bi bi-tag';
-    };
+        Food: 'bi bi-cup-hot',
+        Transport: 'bi bi-car-front',
+        Shopping: 'bi bi-bag',
+        Entertainment: 'bi bi-film',
+        Bills: 'bi bi-receipt',
+        Health: 'bi bi-heart-pulse',
+        Education: 'bi bi-book',
+      }
+      return icons[transaction.category] || 'bi bi-tag'
+    }
 
     const calculateTopCategories = (expenses) => {
-      const categoryTotals = {};
-      expenses.forEach(expense => {
-        const category = expense.categoryName || 'Others';
-        categoryTotals[category] = (categoryTotals[category] || 0) + parseFloat(expense.amount || 0);
-      });
+      const categoryTotals = {}
+      expenses.forEach((expense) => {
+        const category = expense.categoryName || 'Others'
+        categoryTotals[category] = (categoryTotals[category] || 0) + parseFloat(expense.amount || 0)
+      })
 
-      const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
-      const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#feca57', '#48dbfb', '#ff6b6b'];
+      const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0)
+      const colors = [
+        '#667eea',
+        '#f093fb',
+        '#4facfe',
+        '#43e97b',
+        '#fa709a',
+        '#feca57',
+        '#48dbfb',
+        '#ff6b6b',
+      ]
 
       const categories = Object.entries(categoryTotals)
         .map(([name, amount], index) => ({
           name,
           amount,
           percentage: total > 0 ? Math.round((amount / total) * 100) : 0,
-          color: colors[index % colors.length]
+          color: colors[index % colors.length],
         }))
         .sort((a, b) => b.amount - a.amount)
-        .slice(0, 5);
+        .slice(0, 5)
 
-      return categories;
-    };
+      return categories
+    }
 
     // 🌟 NEW: Fetch insights
     const fetchInsights = async () => {
       try {
-        insightsLoading.value = true;
-        console.log('🔄 Starting to fetch insights...');
-        
-        const response = await insightsService.getMonthlyInsights();
-         console.log('✅ API Response:', response);
-        console.log('✅ Response data:', response.data);
-           console.log('🔍 SavingPercent value:', response.data.SavingPercent);
-    console.log('🔍 SavingPercent type:', typeof response.data.SavingPercent);
-    console.log('🔍 Is undefined?:', response.data.SavingPercent === undefined);
-    console.log('🔍 All keys:', Object.keys(response.data));
-        insights.value = response.data;
-        console.log('✅ Insights value after assignment:', insights.value);
+        insightsLoading.value = true
+        console.log('🔄 Starting to fetch insights...')
+
+        const response = await insightsService.getMonthlyInsights()
+        console.log('✅ API Response:', response)
+        console.log('✅ Response data:', response.data)
+        console.log('🔍 SavingPercent value:', response.data.SavingPercent)
+        console.log('🔍 SavingPercent type:', typeof response.data.SavingPercent)
+        console.log('🔍 Is undefined?:', response.data.SavingPercent === undefined)
+        console.log('🔍 All keys:', Object.keys(response.data))
+        insights.value = response.data
+        console.log('✅ Insights value after assignment:', insights.value)
       } catch (err) {
-        console.error('Error fetching insights:', err);
-        console.error('❌ Error response:', err.response);
+        console.error('Error fetching insights:', err)
+        console.error('❌ Error response:', err.response)
       } finally {
-        insightsLoading.value = false;
-         console.log('✅ Insights loading complete. Final state:', {
+        insightsLoading.value = false
+        console.log('✅ Insights loading complete. Final state:', {
           insights: insights.value,
-          loading: insightsLoading.value
-         });
+          loading: insightsLoading.value,
+        })
       }
-    };
-    
+    }
 
     const downloadExcelReport = async () => {
-      isDownloading.value = true;
+      isDownloading.value = true
       try {
-        const response = await reportService.downloadExcelReport();
-        
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'BudgetReport.xlsx';
-        
-        document.body.appendChild(link);
-        link.click();
-        
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        console.log('Report downloaded successfully');
+        const response = await reportService.downloadExcelReport()
+
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.download = 'BudgetReport.xlsx'
+
+        document.body.appendChild(link)
+        link.click()
+
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+
+        console.log('Report downloaded successfully')
       } catch (error) {
-        console.error('Error downloading report:', error);
-        alert('Failed to download report. Please try again.');
+        console.error('Error downloading report:', error)
+        alert('Failed to download report. Please try again.')
       } finally {
-        isDownloading.value = false;
+        isDownloading.value = false
       }
-    };
+    }
 
     const fetchData = async () => {
       try {
-        const expensesRes = await expenseService.getExpenses();
-        recentExpenses.value = expensesRes.data.map(e => ({
+        const expensesRes = await expenseService.getExpenses()
+        recentExpenses.value = expensesRes.data.map((e) => ({
           ...e,
           date: e.date ? e.date.split('T')[0] : '',
           type: 'expense',
           description: e.description || e.categoryName,
-          category: e.categoryName
-        }));
+          category: e.categoryName,
+        }))
 
-        const incomesRes = await incomeService.getIncomes();
-        recentIncomes.value = incomesRes.data.map(i => ({
+        const incomesRes = await incomeService.getIncomes()
+        recentIncomes.value = incomesRes.data.map((i) => ({
           ...i,
           date: i.date ? i.date.split('T')[0] : '',
           type: 'income',
           description: i.notes || i.source || 'Income',
-          category: i.source || 'Income'
-        }));
+          category: i.source || 'Income',
+        }))
 
-        const totalExpenses = recentExpenses.value.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
-        const totalIncome = recentIncomes.value.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
-        const balance = totalIncome - totalExpenses;
+        const totalExpenses = recentExpenses.value.reduce(
+          (sum, e) => sum + parseFloat(e.amount || 0),
+          0,
+        )
+        const totalIncome = recentIncomes.value.reduce(
+          (sum, i) => sum + parseFloat(i.amount || 0),
+          0,
+        )
+        const balance = totalIncome - totalExpenses
 
-        summaryCards.value[0].value = totalIncome;
-        summaryCards.value[1].value = totalExpenses;
-        summaryCards.value[2].value = balance;
+        summaryCards.value[0].value = totalIncome
+        summaryCards.value[1].value = totalExpenses
+        summaryCards.value[2].value = balance
 
         if (balance > 0) {
-          summaryCards.value[2].change = 15.3;
+          summaryCards.value[2].change = 15.3
         } else {
-          summaryCards.value[2].change = -5.2;
+          summaryCards.value[2].change = -5.2
         }
 
-        const allTransactions = [...recentExpenses.value, ...recentIncomes.value];
-        allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-        recentTransactions.value = allTransactions.slice(0, 8);
+        const allTransactions = [...recentExpenses.value, ...recentIncomes.value]
+        allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date))
+        recentTransactions.value = allTransactions.slice(0, 8)
 
-        topCategories.value = calculateTopCategories(recentExpenses.value);
-
+        topCategories.value = calculateTopCategories(recentExpenses.value)
       } catch (err) {
-        console.error("Error fetching data:", err);
+        console.error('Error fetching data:', err)
       }
-    };
+    }
 
     const renderChart = () => {
-      const ctx = document.getElementById("financeChart");
-      if (!ctx) return;
+      const ctx = document.getElementById('financeChart')
+      if (!ctx) return
 
-      const dateMap = {};
-      
-      recentExpenses.value.forEach(e => {
+      const dateMap = {}
+
+      recentExpenses.value.forEach((e) => {
         if (!dateMap[e.date]) {
-          dateMap[e.date] = { income: 0, expense: 0 };
+          dateMap[e.date] = { income: 0, expense: 0 }
         }
-        dateMap[e.date].expense += parseFloat(e.amount || 0);
-      });
+        dateMap[e.date].expense += parseFloat(e.amount || 0)
+      })
 
-      recentIncomes.value.forEach(i => {
+      recentIncomes.value.forEach((i) => {
         if (!dateMap[i.date]) {
-          dateMap[i.date] = { income: 0, expense: 0 };
+          dateMap[i.date] = { income: 0, expense: 0 }
         }
-        dateMap[i.date].income += parseFloat(i.amount || 0);
-      });
+        dateMap[i.date].income += parseFloat(i.amount || 0)
+      })
 
-      const sortedDates = Object.keys(dateMap).sort();
-      const labels = sortedDates.map(date => formatDate(date));
-      const incomeData = sortedDates.map(date => dateMap[date].income);
-      const expenseData = sortedDates.map(date => dateMap[date].expense);
+      const sortedDates = Object.keys(dateMap).sort()
+      const labels = sortedDates.map((date) => formatDate(date))
+      const incomeData = sortedDates.map((date) => dateMap[date].income)
+      const expenseData = sortedDates.map((date) => dateMap[date].expense)
 
-      const gradient1 = ctx.getContext("2d").createLinearGradient(0, 0, 0, 400);
-      gradient1.addColorStop(0, "rgba(67, 233, 123, 0.6)");
-      gradient1.addColorStop(1, "rgba(67, 233, 123, 0.1)");
+      const gradient1 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400)
+      gradient1.addColorStop(0, 'rgba(67, 233, 123, 0.6)')
+      gradient1.addColorStop(1, 'rgba(67, 233, 123, 0.1)')
 
-      const gradient2 = ctx.getContext("2d").createLinearGradient(0, 0, 0, 400);
-      gradient2.addColorStop(0, "rgba(250, 112, 154, 0.6)");
-      gradient2.addColorStop(1, "rgba(250, 112, 154, 0.1)");
+      const gradient2 = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400)
+      gradient2.addColorStop(0, 'rgba(250, 112, 154, 0.6)')
+      gradient2.addColorStop(1, 'rgba(250, 112, 154, 0.1)')
 
       new Chart(ctx, {
-        type: "line",
+        type: 'line',
         data: {
           labels: labels.length > 0 ? labels : ['No data'],
           datasets: [
             {
-              label: "Income",
+              label: 'Income',
               data: incomeData.length > 0 ? incomeData : [0],
               backgroundColor: gradient1,
-              borderColor: "#43e97b",
+              borderColor: '#43e97b',
               borderWidth: 3,
               fill: true,
               tension: 0.4,
-              pointBackgroundColor: "#fff",
-              pointBorderColor: "#43e97b",
+              pointBackgroundColor: '#fff',
+              pointBorderColor: '#43e97b',
               pointBorderWidth: 2,
               pointRadius: 5,
               pointHoverRadius: 7,
             },
             {
-              label: "Expenses",
+              label: 'Expenses',
               data: expenseData.length > 0 ? expenseData : [0],
               backgroundColor: gradient2,
-              borderColor: "#fa709a",
+              borderColor: '#fa709a',
               borderWidth: 3,
               fill: true,
               tension: 0.4,
-              pointBackgroundColor: "#fff",
-              pointBorderColor: "#fa709a",
+              pointBackgroundColor: '#fff',
+              pointBorderColor: '#fa709a',
               pointBorderWidth: 2,
               pointRadius: 5,
               pointHoverRadius: 7,
-            }
-          ]
+            },
+          ],
         },
         options: {
           responsive: true,
@@ -506,77 +558,79 @@ export default {
                 padding: 15,
                 font: {
                   size: 12,
-                  weight: '500'
-                }
-              }
+                  weight: '500',
+                },
+              },
             },
             tooltip: {
-              backgroundColor: "#1f2937",
+              backgroundColor: '#1f2937',
               padding: 12,
               borderRadius: 8,
-              titleColor: "#fff",
-              bodyColor: "#fff",
+              titleColor: '#fff',
+              bodyColor: '#fff',
               displayColors: true,
               callbacks: {
-                label: function(context) {
-                  return context.dataset.label + ': NPR ' + formatNumber(context.parsed.y);
-                }
-              }
-            }
+                label: function (context) {
+                  return context.dataset.label + ': NPR ' + formatNumber(context.parsed.y)
+                },
+              },
+            },
           },
           scales: {
             y: {
               beginAtZero: true,
               grid: {
-                color: "rgba(0, 0, 0, 0.05)",
+                color: 'rgba(0, 0, 0, 0.05)',
               },
               ticks: {
-                callback: function(value) {
-                  return 'NPR ' + value;
-                }
-              }
+                callback: function (value) {
+                  return 'NPR ' + value
+                },
+              },
             },
             x: {
               grid: {
-                display: false
-              }
-            }
-          }
-        }
-      });
+                display: false,
+              },
+            },
+          },
+        },
+      })
 
-      const pieCtx = document.getElementById('categoryPie');
+      const pieCtx = document.getElementById('categoryPie')
       if (pieCtx) {
         new Chart(pieCtx, {
           type: 'doughnut',
           data: {
-            labels: topCategories.value.map(c => c.name),
-            datasets: [{
-              data: topCategories.value.map(c => c.amount),
-              backgroundColor: topCategories.value.map(c => c.color),
-              borderWidth: 0,
-              hoverOffset: 8
-            }]
+            labels: topCategories.value.map((c) => c.name),
+            datasets: [
+              {
+                data: topCategories.value.map((c) => c.amount),
+                backgroundColor: topCategories.value.map((c) => c.color),
+                borderWidth: 0,
+                hoverOffset: 8,
+              },
+            ],
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             cutout: '65%',
-            plugins: { legend: { display: false } }
-          }
-        });
+            plugins: { legend: { display: false } },
+          },
+        })
       }
-    };
+    }
 
     onMounted(async () => {
-      await Promise.all([fetchData(), fetchInsights()]); // 🌟 Fetch both in parallel
+      await Promise.all([fetchData(), fetchInsights()]) // 🌟 Fetch both in parallel
       setTimeout(() => {
-        renderChart();
-      }, 100);
-    });
+        renderChart()
+      }, 100)
+    })
 
-    return { 
-      summaryCards, 
+    return {
+      summaryCards,
       recentTransactions,
       topCategories,
       currentDate,
@@ -588,10 +642,10 @@ export default {
       // 🌟 NEW returns
       insights,
       insightsLoading,
-      savingsClass
-    };
-  }
-};
+      savingsClass,
+    }
+  },
+}
 </script>
 
 <style scoped>
@@ -737,7 +791,8 @@ export default {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 0.6;
   }
@@ -960,7 +1015,6 @@ export default {
 
 /* 🌟 END OF INSIGHTS STYLES */
 
-
 .stat-card {
   background: white;
   border-radius: 16px;
@@ -968,7 +1022,9 @@ export default {
   display: flex;
   gap: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   position: relative;
   overflow: hidden;
 }
@@ -1058,7 +1114,9 @@ export default {
 }
 
 /* Chart Card */
-.chart-card, .category-card, .transactions-card {
+.chart-card,
+.category-card,
+.transactions-card {
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -1098,7 +1156,8 @@ export default {
   transition: all 0.3s ease;
 }
 
-.btn-chart-filter:hover, .btn-chart-filter.active {
+.btn-chart-filter:hover,
+.btn-chart-filter.active {
   background: #667eea;
   color: white;
   border-color: #667eea;

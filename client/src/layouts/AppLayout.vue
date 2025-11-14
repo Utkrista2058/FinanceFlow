@@ -1,80 +1,3 @@
-<!-- 
-<template>
-  <div class="app-layout">
-    <Sidebar />
-    <div class="main-content">
-      <router-view />
-    </div>
-  </div>
-</template>
-
-<script>
-import Sidebar from '@/components/Sidebar.vue';
-
-export default {
-  name: 'AppLayout',
-  components: {
-    Sidebar
-  }
-};
-</script>
-
-<style scoped>
-.app-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f3f4f6;
-}
-
-.main-content {
-  flex: 1;
-  margin-left: 250px; /* Adjust based on your sidebar width */
-  padding: 2rem;
-  transition: margin-left 0.3s ease;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    padding: 1rem;
-  }
-}
-</style> -->
-
-
-<!-- 
-<template>
-  <div id="app">
-    
-    <nav>
-      <router-link to="/category">Category Page</router-link>
-      <router-link to="/income">Income Page</router-link>
-      <router-link to="/expense">Expense Page</router-link>
-      <router-link to="/dashboard">Dashboard Page</router-link>
-      
-    </nav>
-
-  
-    <router-view />
-  </div>
-</template>
-
-<script>
-export default {
-  name: 'App'
-}
-</script>
-
-<style>
-
-nav a {
-  margin-right: 10px;
-}
-</style> -->
-
-
-
 <template>
   <div id="app">
     <!-- Sidebar Navigation -->
@@ -150,22 +73,19 @@ nav a {
       </div>
 
       <div class="sidebar-footer" v-if="!isSidebarCollapsed">
-        
         <div class="user-card">
-        <div class="user-avatar">
-        <i class="bi bi-person-circle"></i>
-        </div>
-        <div class="user-info">
-        <p class="user-name mb-0">Utkrista Parajuli</p>
-        <p class="user-email mb-0">utkristaparajuli@gmail.com</p>
-        </div>
-        <button @click="logout" class="logout-btn">
-         <i class="bi bi-box-arrow-right"></i> Logout
-        </button>
+          <div class="user-avatar">
+            <i class="bi bi-person-circle"></i>
+          </div>
+          <div class="user-info">
+            <p class="user-name mb-0">Utkrista Parajuli</p>
+            <p class="user-email mb-0">utkristaparajuli@gmail.com</p>
+          </div>
+          <button @click="logout" class="logout-btn">
+            <i class="bi bi-box-arrow-right"></i> Logout
+          </button>
         </div>
       </div>
-        
-      
     </div>
 
     <!-- Main Content Area -->
@@ -178,7 +98,7 @@ nav a {
           </button>
           <h5 class="page-title mb-0">{{ currentPageTitle }}</h5>
         </div>
-        <div class="top-bar-right">
+        <!-- <div class="top-bar-right">
           <button class="top-bar-icon-btn">
             <i class="bi bi-bell"></i>
             <span class="notification-badge">3</span>
@@ -186,8 +106,15 @@ nav a {
           <button class="top-bar-icon-btn">
             <i class="bi bi-question-circle"></i>
           </button>
+        </div> -->
+        <div class="top-bar-right">
+          <NotificationBell />
+
+          <button class="top-bar-icon-btn">
+            <i class="bi bi-question-circle"></i>
+          </button>
         </div>
-        </div>
+      </div>
 
       <!-- Router View -->
       <div class="content-wrapper">
@@ -199,73 +126,81 @@ nav a {
       <!-- Footer -->
       <footer class="app-footer">
         <p class="mb-0 text-muted small">
-          ©  Utkrista Parajuli. Made with <i class="bi bi-heart-fill text-danger"></i> for better personal financial management
+          © Utkrista Parajuli. Made with <i class="bi bi-heart-fill text-danger"></i> for better
+          personal financial management
         </p>
       </footer>
     </div>
 
     <!-- Mobile Overlay -->
     <transition name="fade">
-      <div v-if="!isSidebarCollapsed && isMobile" class="mobile-overlay" @click="toggleSidebar"></div>
+      <div
+        v-if="!isSidebarCollapsed && isMobile"
+        class="mobile-overlay"
+        @click="toggleSidebar"
+      ></div>
     </transition>
   </div>
 </template>
 
 <script>
-import AuthService from '../services/authService' 
-
+import AuthService from '../services/authService'
+import NotificationBell from '../components/NotificationBell.vue'
 
 export default {
   name: 'App',
+  components: {
+    NotificationBell,
+  },
   data() {
     return {
       isSidebarCollapsed: false,
-      isMobile: false
+      isMobile: false,
     }
   },
   computed: {
     currentPageTitle() {
-      const route = this.$route.path;
+      const route = this.$route.path
       const titles = {
         '/dashboard': 'Dashboard',
         '/income': 'Income Management',
         '/expense': 'Expense Tracking',
-        '/category': 'Category Management'
-      };
-      return titles[route] || 'FinanceFlow';
-    }
+        '/category': 'Category Management',
+      }
+      return titles[route] || 'FinanceFlow'
+    },
   },
   mounted() {
-    this.checkMobile();
-    window.addEventListener('resize', this.checkMobile);
+    this.checkMobile()
+    window.addEventListener('resize', this.checkMobile)
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.checkMobile);
+    window.removeEventListener('resize', this.checkMobile)
   },
   methods: {
-      toggleSidebar() {
-      this.isSidebarCollapsed = !this.isSidebarCollapsed;
+    toggleSidebar() {
+      this.isSidebarCollapsed = !this.isSidebarCollapsed
     },
     checkMobile() {
-      this.isMobile = window.innerWidth <= 768;
+      this.isMobile = window.innerWidth <= 768
       if (this.isMobile) {
-        this.isSidebarCollapsed = true;
+        this.isSidebarCollapsed = true
       }
     },
     logout() {
-      AuthService.logout();
-      this.$router.push('/login'); // redirect to login page
+      AuthService.logout()
+      this.$router.push('/login') // redirect to login page
     },
     toggleSidebar() {
-      this.isSidebarCollapsed = !this.isSidebarCollapsed;
+      this.isSidebarCollapsed = !this.isSidebarCollapsed
     },
     checkMobile() {
-      this.isMobile = window.innerWidth <= 768;
+      this.isMobile = window.innerWidth <= 768
       if (this.isMobile) {
-        this.isSidebarCollapsed = true;
+        this.isSidebarCollapsed = true
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
@@ -673,11 +608,13 @@ body {
 }
 
 /* Animations */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 
@@ -769,8 +706,18 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(79, 91, 213, 0.5);
 }
+.top-bar-right .notification-bell .bell-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: transparent;
+}
+
+.top-bar-right .notification-bell .bell-button:hover {
+  background: rgba(79, 91, 213, 0.2);
+  border-color: transparent;
+}
+
+.top-bar-right .notification-bell .notification-dropdown {
+  right: 0;
+  top: calc(100% + 12px);
+}
 </style>
-
-
-
-

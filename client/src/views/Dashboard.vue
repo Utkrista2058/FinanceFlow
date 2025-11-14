@@ -17,9 +17,6 @@
         </span>
       </div> -->
       <div class="header-actions">
-        <!-- ✅ ADD THIS LINE -->
-        <NotificationBell />
-
         <button @click="downloadExcelReport" class="download-btn" :disabled="isDownloading">
           <i class="bi bi-download"></i>
           <span v-if="!isDownloading">Download Yearly Report</span>
@@ -243,13 +240,9 @@ import expenseService from '../services/expenseService'
 import incomeService from '../services/incomeService'
 import insightsService from '../services/insightsService' // 🌟 NEW IMPORT
 import Chart from 'chart.js/auto'
-import NotificationBell from '../components/NotificationBell.vue'
 
 export default {
   name: 'Dashboard',
-  components: {
-    NotificationBell,
-  },
 
   setup() {
     const summaryCards = ref([

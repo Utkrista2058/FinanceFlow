@@ -120,50 +120,96 @@ namespace SmartBudgetTracker.Controllers
         }
 
         // POST: api/notifications/register
+        //[HttpPost("register")]
+        //public async Task<IActionResult> RegisterToken([FromBody] RegisterTokenRequest request)
+        //{
+        //    try
+        //    {
+        //        // Check if token already exists for this user
+        //        var existingToken = await _context.UserFCMTokens
+        //            .FirstOrDefaultAsync(t => t.UserId == request.UserId && t.FcmToken == request.FcmToken);
+
+        //        if (existingToken != null)
+        //        {
+        //            // Update existing token
+        //            existingToken.UpdatedAt = DateTime.UtcNow;
+        //            existingToken.IsActive = true;
+        //            existingToken.Email = request.Email;
+        //        }
+        //        else
+        //        {
+        //            // Create new token
+        //            var newToken = new UserFCMToken
+        //            {
+        //                UserId = request.UserId,
+        //                FcmToken = request.FcmToken,
+        //                Email = request.Email,
+        //                CreatedAt = DateTime.UtcNow,
+        //                UpdatedAt = DateTime.UtcNow,
+        //                IsActive = true
+        //            };
+
+        //            _context.UserFCMTokens.Add(newToken);
+        //        }
+
+        //        await _context.SaveChangesAsync();
+
+        //        return Ok(new
+        //        {
+        //            message = "Token registered successfully",
+        //            userId = request.UserId
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Error registering token: {ex.Message}");
+        //        return BadRequest(new { error = ex.Message });
+        //    }
+        //}
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterToken([FromBody] RegisterTokenRequest request)
+        public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceDto dto)
         {
             try
             {
+                // Check if user exists
+                var userExists = await _context.Users.AnyAsync(u => u.Id == dto.UserId);
+                if (!userExists)
+                {
+                    return BadRequest(new { error = $"User with ID {dto.UserId} does not exist" });
+                }
+
                 // Check if token already exists for this user
-                var existingToken = await _context.UserFCMTokens
-                    .FirstOrDefaultAsync(t => t.UserId == request.UserId && t.FcmToken == request.FcmToken);
+                var existingToken = await _context.DeviceTokens
+                    .FirstOrDefaultAsync(dt => dt.UserId == dto.UserId && dt.FcmToken == dto.FcmToken);
 
                 if (existingToken != null)
                 {
                     // Update existing token
-                    existingToken.UpdatedAt = DateTime.UtcNow;
+                    existingToken.LastUsedAt = DateTime.UtcNow;
                     existingToken.IsActive = true;
-                    existingToken.Email = request.Email;
                 }
                 else
                 {
                     // Create new token
-                    var newToken = new UserFCMToken
+                    var deviceToken = new DeviceToken
                     {
-                        UserId = request.UserId,
-                        FcmToken = request.FcmToken,
-                        Email = request.Email,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
+                        UserId = dto.UserId,
+                        FcmToken = dto.FcmToken,
+                        DeviceType = "web", // or get from dto
+                        RegisteredAt = DateTime.UtcNow,
                         IsActive = true
                     };
 
-                    _context.UserFCMTokens.Add(newToken);
+                    await _context.DeviceTokens.AddAsync(deviceToken);
                 }
 
                 await _context.SaveChangesAsync();
-
-                return Ok(new
-                {
-                    message = "Token registered successfully",
-                    userId = request.UserId
-                });
+                return Ok(new { message = "Device registered successfully" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error registering token: {ex.Message}");
-                return BadRequest(new { error = ex.Message });
+                Console.WriteLine($"Error registering device:", ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 

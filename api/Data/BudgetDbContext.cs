@@ -16,8 +16,9 @@ namespace SmartBudgetTracker.Data
         public DbSet<BudgetGoal> BudgetGoals { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<UserFCMToken> UserFCMTokens { get; set; }
+        public DbSet<DeviceToken> DeviceTokens { get; set; }
 
-        
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

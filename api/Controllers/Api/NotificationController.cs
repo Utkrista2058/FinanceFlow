@@ -102,7 +102,7 @@ using System.Threading.Tasks;
 using SmartBudgetTracker.Data;
 
 
-namespace YourProjectName.Controllers
+namespace SmartBudgetTracker.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

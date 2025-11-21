@@ -146,6 +146,7 @@
 <script>
 import AuthService from '../services/authService'
 import NotificationBell from '../components/NotificationBell.vue'
+import { onMessageListener } from '..src/firebase/config.js'
 
 export default {
   name: 'App',
@@ -173,7 +174,9 @@ export default {
   mounted() {
     this.checkMobile()
     window.addEventListener('resize', this.checkMobile)
+    this.listenForNotifications()
   },
+
   beforeUnmount() {
     window.removeEventListener('resize', this.checkMobile)
   },
@@ -191,14 +194,38 @@ export default {
       AuthService.logout()
       this.$router.push('/login') // redirect to login page
     },
-    toggleSidebar() {
-      this.isSidebarCollapsed = !this.isSidebarCollapsed
-    },
-    checkMobile() {
-      this.isMobile = window.innerWidth <= 768
-      if (this.isMobile) {
-        this.isSidebarCollapsed = true
-      }
+    // toggleSidebar() {
+    //   this.isSidebarCollapsed = !this.isSidebarCollapsed
+    // },
+    // checkMobile() {
+    //   this.isMobile = window.innerWidth <= 768
+    //   if (this.isMobile) {
+    //     this.isSidebarCollapsed = true
+    //   }
+    // },
+    listenForNotifications() {
+      onMessageListener()
+        .then((payload) => {
+          console.log('📬 Notification received:', payload)
+
+          // Option 1: Update NotificationBell component (emit event)
+          this.$root.$emit('new-notification', payload)
+
+          // Option 2: Show browser notification
+          if (Notification.permission === 'granted') {
+            new Notification(payload.notification.title, {
+              body: payload.notification.body,
+              icon: '/favicon.ico',
+              badge: '/favicon.ico',
+            })
+          }
+
+          // Option 3: Show toast notification (if you have a toast library)
+          // this.$toast.info(payload.notification.title)
+        })
+        .catch((err) => {
+          console.log('Notification listener error:', err)
+        })
     },
   },
 }

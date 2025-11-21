@@ -191,6 +191,7 @@ catch (Exception ex)
     // Log but don't crash during startup/migrations
     Console.WriteLine($"Firebase initialization skipped: {ex.Message}");
 }
+builder.Services.AddSingleton<IFirebaseNotificationService, FirebaseNotificationService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(x =>

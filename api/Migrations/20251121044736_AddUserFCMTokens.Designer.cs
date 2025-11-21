@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SmartBudgetTracker.Data;
@@ -11,9 +12,11 @@ using SmartBudgetTracker.Data;
 namespace SmartBudgetTracker.Migrations
 {
     [DbContext(typeof(BudgetDbContext))]
-    partial class BudgetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251121044736_AddUserFCMTokens")]
+    partial class AddUserFCMTokens
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -187,50 +190,6 @@ namespace SmartBudgetTracker.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("SmartBudgetTracker.Models.UserFCMToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeviceInfo")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("FcmToken")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FcmToken");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserFCMTokens");
-                });
-
             modelBuilder.Entity("SmartBudgetTracker.Models.Expense", b =>
                 {
                     b.HasOne("SmartBudgetTracker.Models.Category", "Category")
@@ -243,17 +202,6 @@ namespace SmartBudgetTracker.Migrations
                 });
 
             modelBuilder.Entity("SmartBudgetTracker.Models.Notification", b =>
-                {
-                    b.HasOne("SmartBudgetTracker.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SmartBudgetTracker.Models.UserFCMToken", b =>
                 {
                     b.HasOne("SmartBudgetTracker.Models.User", "User")
                         .WithMany()

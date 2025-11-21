@@ -146,7 +146,7 @@
 <script>
 import AuthService from '../services/authService'
 import NotificationBell from '../components/NotificationBell.vue'
-import { onMessageListener } from '../firebase/config.js'
+import { onMessageListener } from './firebase/config.js'
 
 export default {
   name: 'App',

@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { onMessageListener } from '../firebase/config.js'
+import { onMessageListener } from './firebase/config.js'
 
 export default {
   name: 'App',
